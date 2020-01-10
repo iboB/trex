@@ -16,4 +16,4 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${DEMO_WARNING_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${DEMO_WARNING_FLAGS}")
 
-add_executable(trex trex.hpp test.cpp)
+add_executable(trex test.cpp)

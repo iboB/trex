@@ -1,4 +1,4 @@
-#include "trex.hpp"
+#include "include/trex/hierarchy.hpp"
 
 #include <iostream>
 #include <string>
