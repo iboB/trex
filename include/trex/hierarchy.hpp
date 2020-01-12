@@ -19,6 +19,11 @@ public:
     // hierarchy specific type info
     struct type_info : public trex::type_info
     {
+        // we can't just reinterpret cast void* to a base pointer
+        // base is not necessarily first in the parents list
+        using as_base_func = Base*(*)(void* self);
+        as_base_func as_base;
+
         using alloc_and_construct_a_f = Base* (*)(Args&&...);
         alloc_and_construct_a_f alloc_and_construct_a;
 
@@ -35,6 +40,7 @@ public:
 
         type_info new_type_info;
         static_cast<trex::type_info&>(new_type_info) = ti;
+        new_type_info.as_base = as_base<T>;
         new_type_info.construct_at_a = construct_at_a<T>;
         new_type_info.alloc_and_construct_a = alloc_and_construct_a<T>;
 
@@ -93,6 +99,12 @@ public:
     }
 
 private:
+    template <typename T>
+    static Base* as_base(void* t)
+    {
+        return reinterpret_cast<T*>(t);
+    }
+
     template <typename T>
     static Base* construct_at_a(void* ptr, Args&&... args)
     {
