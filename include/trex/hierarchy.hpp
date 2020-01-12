@@ -10,7 +10,7 @@
 namespace trex
 {
 
-template <typename Base>
+template <typename Base, typename... Args>
 class hierarchy
 {
 public:
@@ -19,10 +19,11 @@ public:
     // hierarchy specific type info
     struct type_info : public trex::type_info
     {
-        // we can't just reinterpret cast void* to a base pointer
-        // base is not necessarily first in the parents list
-        using as_base_func = Base*(*)(void* self);
-        as_base_func as_base;
+        using alloc_and_construct_a_f = Base* (*)(Args&&...);
+        alloc_and_construct_a_f alloc_and_construct_a;
+
+        using construct_at_a_f = Base* (*)(void*, Args&&...);
+        construct_at_a_f construct_at_a;
     };
 
     template <typename T>
@@ -34,7 +35,8 @@ public:
 
         type_info new_type_info;
         static_cast<trex::type_info&>(new_type_info) = ti;
-        new_type_info.as_base = as_base<T>;
+        new_type_info.construct_at_a = construct_at_a<T>;
+        new_type_info.alloc_and_construct_a = alloc_and_construct_a<T>;
 
         // here we don't simply add the to the list
         // to support plugins and hot reloading, we override existing types
@@ -62,35 +64,45 @@ public:
         return *f;
     }
 
-    Base* construct(const char* name, void* buf, size_t buf_size = ~size_t(0)) const
+    struct buffer
+    {
+        buffer(void* ptr) : ptr(ptr) {}
+        buffer(void* ptr, size_t size) : ptr(ptr), size(size) {}
+        void* ptr;
+        size_t size = ~size_t(0);
+    };
+
+    Base* construct(const char* name, buffer buf, Args&&... args) const
     {
         auto info = find_type_info(name);
         if (!info) return nullptr;
 
-        auto offset = info.bytes_to_align(buf);
-        if (offset + info.size > buf_size) return nullptr; // buf is not big enough
+        auto offset = info.bytes_to_align(buf.ptr);
+        if (offset + info.size > buf.size) return nullptr; // buf is not big enough
 
-        auto ptr = reinterpret_cast<uint8_t*>(buf);
+        auto ptr = reinterpret_cast<uint8_t*>(buf.ptr);
         ptr += offset;
-
-        info.default_construct_at(ptr);
-        return info.as_base(ptr);
+        return info.construct_at_a(ptr, std::forward<Args>(args)...);
     }
 
-    Base* alloc_and_construct(const char* name) const
+    Base* alloc_and_construct(const char* name, Args&&... args) const
     {
         auto info = find_type_info(name);
         if (!info) return nullptr;
-
-        return info.as_base(info.alloc_and_construct());
+        return info.alloc_and_construct_a(std::forward<Args>(args)...);
     }
 
 private:
+    template <typename T>
+    static Base* construct_at_a(void* ptr, Args&&... args)
+    {
+        return new (ptr) T(std::forward<Args>(args)...);
+    }
 
     template <typename T>
-    static Base* as_base(void* t)
+    static Base* alloc_and_construct_a(Args&&... args)
     {
-        return reinterpret_cast<T*>(t);
+        return new T(std::forward<Args>(args)...);
     }
 
     mutable priv::mutex m_register_mutex;
