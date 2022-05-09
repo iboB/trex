@@ -1,5 +1,5 @@
 // T-Rex
-// Copyright (c) 2020 Borislav Stanimirov
+// Copyright (c) 2020-2022 Borislav Stanimirov
 //
 // Distributed under the MIT Software License
 // See accompanying file LICENSE.txt or copy at
@@ -7,9 +7,8 @@
 //
 #pragma once
 
-#include "priv/cstr_view.hpp"
-
 #include <cstdint>
+#include <string_view>
 #include <type_traits>
 
 namespace trex
@@ -20,13 +19,13 @@ struct type_info
     using v_pv_f = void(*)(void*);
     using pv_v_f = void*(*)();
 
-    priv::cstr_view name;
+    std::string_view name;
     size_t size = 0;
     size_t alignment = 0;
     v_pv_f default_construct_at = nullptr; // call default constructor on an existing pointer
     pv_v_f alloc_and_construct = nullptr; // allocate and construct an object of that type
 
-    explicit operator bool() { return bool(name); }
+    explicit operator bool() { return !name.empty(); }
 
     // returns how many bytes from the pointer on one needs to move
     // in order to properly construct a type with a given alignment
@@ -70,7 +69,7 @@ template <typename T>
 struct t_type_info : type_info {};
 
 template <typename T>
-t_type_info<T> make_type_info(priv::cstr_view name)
+t_type_info<T> make_type_info(std::string_view name)
 {
     t_type_info<T> ret;
     ret.name = name;

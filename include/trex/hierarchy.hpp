@@ -1,5 +1,5 @@
 // T-Rex
-// Copyright (c) 2020 Borislav Stanimirov
+// Copyright (c) 2020-2022 Borislav Stanimirov
 //
 // Distributed under the MIT Software License
 // See accompanying file LICENSE.txt or copy at
@@ -66,7 +66,7 @@ public:
         m_registered_types.emplace_back(std::move(new_type_info));
     }
 
-    type_info find_type_info(const char* name) const noexcept
+    type_info find_type_info(std::string_view name) const noexcept
     {
         priv::lock_guard lock(m_register_mutex);
         auto f = std::find_if(m_registered_types.begin(), m_registered_types.end(), [name](const type_info& t) {
@@ -85,7 +85,7 @@ public:
         size_t size = ~size_t(0);
     };
 
-    Base* construct(const char* name, buffer buf, Args&&... args) const
+    Base* construct(std::string_view name, buffer buf, Args&&... args) const
     {
         auto info = find_type_info(name);
         if (!info) return nullptr;
@@ -98,7 +98,7 @@ public:
         return info.construct_at_a(ptr, std::forward<Args>(args)...);
     }
 
-    Base* alloc_and_construct(const char* name, Args&&... args) const
+    Base* alloc_and_construct(std::string_view name, Args&&... args) const
     {
         auto info = find_type_info(name);
         if (!info) return nullptr;
