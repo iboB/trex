@@ -24,6 +24,7 @@ struct type_info
     size_t alignment = 0;
     v_pv_f default_construct_at = nullptr; // call default constructor on an existing pointer
     pv_v_f alloc_and_construct = nullptr; // allocate and construct an object of that type
+    v_pv_f destroy = nullptr;
 
     explicit operator bool() { return !name.empty(); }
 
