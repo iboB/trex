@@ -21,4 +21,6 @@ struct fast_registration {
     };
 };
 
+using default_registration = fast_registration;
+
 } // namespace trex::reg

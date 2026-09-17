@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 //
 #include <trex/hierarchy.hpp>
+#include <trex/facets.hpp>
 
 #include <iostream>
 #include <string>
