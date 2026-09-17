@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
-
 #include "type_info.hpp"
-
-#include "priv/mutex.hpp"
+#include "reg.hpp"
 
 #include <vector>
 #include <algorithm>
@@ -13,9 +11,11 @@
 namespace trex
 {
 
-template <typename Base, typename... Args>
-class hierarchy
+template <typename Registration, typename Base, typename... CtorArgs>
+class basic_hierarchy
 {
+    using mutex = typename Registration::mutex;
+    using lock_guard = typename Registration::lock_guard;
 public:
     using base_t = Base;
 
@@ -27,10 +27,10 @@ public:
         using as_base_func = Base*(*)(void* self);
         as_base_func as_base;
 
-        using alloc_and_construct_a_f = Base* (*)(Args&&...);
+        using alloc_and_construct_a_f = Base* (*)(CtorArgs&&...);
         alloc_and_construct_a_f alloc_and_construct_a;
 
-        using construct_at_a_f = Base* (*)(void*, Args&&...);
+        using construct_at_a_f = Base* (*)(void*, CtorArgs&&...);
         construct_at_a_f construct_at_a;
     };
 
@@ -39,7 +39,7 @@ public:
     {
         static_assert(std::is_base_of<Base, T>::value, "Not a base class");
 
-        priv::lock_guard l(m_register_mutex);
+        lock_guard l(m_register_mutex);
 
         type_info new_type_info;
         static_cast<trex::type_info&>(new_type_info) = ti;
@@ -64,7 +64,7 @@ public:
 
     type_info find_type_info(std::string_view name) const noexcept
     {
-        priv::lock_guard lock(m_register_mutex);
+        lock_guard lock(m_register_mutex);
         auto f = std::find_if(m_registered_types.begin(), m_registered_types.end(), [name](const type_info& t) {
             return name == t.name;
         });
@@ -81,7 +81,7 @@ public:
         size_t size = ~size_t(0);
     };
 
-    Base* construct(std::string_view name, buffer buf, Args&&... args) const
+    Base* construct(std::string_view name, buffer buf, CtorArgs&&... args) const
     {
         auto info = find_type_info(name);
         if (!info) return nullptr;
@@ -91,14 +91,14 @@ public:
 
         auto ptr = reinterpret_cast<uint8_t*>(buf.ptr);
         ptr += offset;
-        return info.construct_at_a(ptr, std::forward<Args>(args)...);
+        return info.construct_at_a(ptr, std::forward<CtorArgs>(args)...);
     }
 
-    Base* alloc_and_construct(std::string_view name, Args&&... args) const
+    Base* alloc_and_construct(std::string_view name, CtorArgs&&... args) const
     {
         auto info = find_type_info(name);
         if (!info) return nullptr;
-        return info.alloc_and_construct_a(std::forward<Args>(args)...);
+        return info.alloc_and_construct_a(std::forward<CtorArgs>(args)...);
     }
 
 private:
@@ -109,19 +109,22 @@ private:
     }
 
     template <typename T>
-    static Base* construct_at_a(void* ptr, Args&&... args)
+    static Base* construct_at_a(void* ptr, CtorArgs&&... args)
     {
-        return new (ptr) T(std::forward<Args>(args)...);
+        return new (ptr) T(std::forward<CtorArgs>(args)...);
     }
 
     template <typename T>
-    static Base* alloc_and_construct_a(Args&&... args)
+    static Base* alloc_and_construct_a(CtorArgs&&... args)
     {
-        return new T(std::forward<Args>(args)...);
+        return new T(std::forward<CtorArgs>(args)...);
     }
 
-    mutable priv::mutex m_register_mutex;
+    mutable mutex m_register_mutex;
     std::vector<type_info> m_registered_types;
 };
+
+template <typename Base, typename... CtorArgs>
+using hierarchy = basic_hierarchy<reg::fast_registration, Base, CtorArgs...>;
 
 }
