@@ -1,11 +1,7 @@
-// T-Rex
-// Copyright (c) 2020-2022 Borislav Stanimirov
+// Copyright (c) Borislav Stanimirov
+// SPDX-License-Identifier: MIT
 //
-// Distributed under the MIT Software License
-// See accompanying file LICENSE.txt or copy at
-// https://opensource.org/licenses/MIT
-//
-#include "include/trex/hierarchy.hpp"
+#include <trex/hierarchy.hpp>
 
 #include <iostream>
 #include <string>
