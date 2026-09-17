@@ -7,11 +7,9 @@
 #include <string_view>
 #include <type_traits>
 
-namespace trex
-{
+namespace trex {
 
-struct type_info
-{
+struct type_info {
     using v_pv_f = void(*)(void*);
     using pv_v_f = void*(*)();
 
@@ -26,8 +24,7 @@ struct type_info
 
     // returns how many bytes from the pointer on one needs to move
     // in order to properly construct a type with a given alignment
-    size_t bytes_to_align(const void* ptr)
-    {
+    size_t bytes_to_align(const void* ptr) {
         auto nptr = reinterpret_cast<uintptr_t>(ptr);
         auto naddr = ((nptr + alignment - 1) / alignment) // divide rounding up
             * alignment; // and scale
@@ -35,8 +32,7 @@ struct type_info
     }
 };
 
-namespace priv
-{
+namespace impl {
 
 template <typename T> void default_construct_at(void* ptr) { new (ptr) T; }
 template <typename T> typename std::enable_if<std::is_default_constructible<T>::value, type_info::v_pv_f>::type
@@ -50,15 +46,14 @@ get_alloc_and_construct_func() { return alloc_and_construct<T>; }
 template <typename T> typename std::enable_if<! std::is_default_constructible<T>::value, type_info::pv_v_f>::type
 get_alloc_and_construct_func() { return nullptr; }
 
-} // namespace priv
+} // namespace impl
 
 template <typename T>
-void set_missing_traits_to_info(type_info& info)
-{
+void set_missing_traits_to_info(type_info& info) {
     if (!info.size) info.size = sizeof(T);
     if (!info.alignment) info.alignment = std::alignment_of<T>::value;
-    if (!info.default_construct_at) info.default_construct_at = priv::get_default_construct_at_func<T>();
-    if (!info.alloc_and_construct) info.alloc_and_construct = priv::get_alloc_and_construct_func<T>();
+    if (!info.default_construct_at) info.default_construct_at = impl::get_default_construct_at_func<T>();
+    if (!info.alloc_and_construct) info.alloc_and_construct = impl::get_alloc_and_construct_func<T>();
 }
 
 // used to cary the type name with the info
@@ -66,8 +61,7 @@ template <typename T>
 struct t_type_info : type_info {};
 
 template <typename T>
-t_type_info<T> make_type_info(std::string_view name)
-{
+t_type_info<T> make_type_info(std::string_view name) {
     t_type_info<T> ret;
     ret.name = name;
     set_missing_traits_to_info<T>(ret);
