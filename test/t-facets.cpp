@@ -73,66 +73,66 @@ TEST_CASE("domain manual") {
 template <typename Container>
 void test_facets() {
     trex::facets<domain_a, Container> fa;
-    CHECK(fa.template get<facet_a>() == nullptr);
-    CHECK(fa.template get_pl<facet_a>() == nullptr);
-    CHECK(fa.get("facet_a") == nullptr);
-    CHECK(fa.get("foo") == nullptr);
+    CHECK(fa.template pget<facet_a>() == nullptr);
+    CHECK(fa.template pget_pl<facet_a>() == nullptr);
+    CHECK(fa.pget("facet_a") == nullptr);
+    CHECK(fa.pget("foo") == nullptr);
 
-    fa.template get_default_pl<facet_a>() = 42;
+    fa.template get_pl<facet_a>() = 42;
     CHECK(fa.template has<facet_a>());
     {
-        auto* f = fa.template get<facet_a>();
+        auto f = fa.template pget<facet_a>();
         REQUIRE(f);
         CHECK(f->payload == 42);
-        CHECK(fa.template get<facet_a>() == f);
-        CHECK(&fa.template get_default<facet_a>() == f);
-        CHECK(fa.template get_pl<facet_a>() == &f->payload);
-        CHECK(fa.get("facet_a") == f);
+        CHECK(fa.template pget<facet_a>() == f);
+        CHECK(&fa.template get<facet_a>() == f.get());
+        CHECK(fa.template pget_pl<facet_a>().get() == &f->payload);
+        CHECK(fa.pget("facet_a") == f);
     }
     fa.template reset<facet_a>();
     CHECK_FALSE(fa.template has<facet_a>());
 
-    fa.set(facet_multi{"hello"});
+    fa.reset(facet_multi{"hello"});
     CHECK(fa.template has<facet_multi>());
     {
-        auto* f = fa.template get<facet_multi>();
+        auto f = fa.template pget<facet_multi>();
         REQUIRE(f);
         CHECK(f->payload == "hello");
-        CHECK(fa.get("facet_multi") == f);
+        CHECK(fa.pget("facet_multi") == f);
     }
 
     facet_multi ref_share = {"ref"};
-    fa.set_ref(ref_share);
-    CHECK(fa.template get<facet_multi>() == &ref_share);
-    CHECK(fa.template get_default_pl<facet_multi>() == "ref");
+    fa.reset_ref(ref_share);
+    CHECK(fa.template pget<facet_multi>().get() == &ref_share);
+    CHECK(fa.template get_pl<facet_multi>() == "ref");
 
     auto shared_uint = std::make_shared<uint64_t>(123);
-    fa.set_shared(shared_uint);
+    fa.reset_shared(shared_uint);
     CHECK(shared_uint.use_count() == 2);
     CHECK(fa.template has<uint64_t>());
-    CHECK(fa.get("uint64_t") == shared_uint.get());
-    CHECK(fa.template get_default<uint64_t>() == 123);
-    fa.reset("uint64_t");
+    CHECK(fa.pget("uint64_t") == shared_uint);
+    CHECK(fa.template get<uint64_t>() == 123);
+    fa.reset_name("uint64_t");
     CHECK_FALSE(fa.template has<uint64_t>());
 
-    fa.set(uint64_t(53));
+    fa.reset(uint64_t(53));
     CHECK(fa.template has<uint64_t>());
-    CHECK(fa.template get_default<uint64_t>() == 53);
+    CHECK(fa.template get<uint64_t>() == 53);
 
-    fa.set_unsafe("uint64_t", shared_uint);
-    CHECK(fa.template get_default<uint64_t>() == 123);
+    fa.reset_name("uint64_t", shared_uint);
+    CHECK(fa.template get<uint64_t>() == 123);
 
     {
-        auto ss = fa.template scoped_set<uint64_t>(42);
-        CHECK(fa.template get_default<uint64_t>() == 42);
+        auto ss = fa.template scoped_reset<uint64_t>(42);
+        CHECK(fa.template get<uint64_t>() == 42);
     }
-    CHECK(fa.template get<uint64_t>() == shared_uint.get());
+    CHECK(fa.template pget<uint64_t>() == shared_uint);
 
     {
         auto ss = fa.template scoped_reset<uint64_t>();
         CHECK_FALSE(fa.template has<uint64_t>());
     }
-    CHECK(fa.template get<uint64_t>() == shared_uint.get());
+    CHECK(fa.template pget<uint64_t>() == shared_uint);
 
     {
         auto ss = fa.template scoped_pl_set<facet_multi>("scoped");
@@ -144,9 +144,9 @@ void test_facets() {
     CHECK(ref_share.payload == "ref");
 
     trex::facets<domain_b, Container> fb;
-    fb.set_ref(ref_share);
-    CHECK(fb.template get<facet_multi>() == &ref_share);
-    CHECK(fb.template get_default_pl<facet_multi>() == "ref");
+    fb.reset_ref(ref_share);
+    CHECK(fb.template pget<facet_multi>().get() == &ref_share);
+    CHECK(fb.template get_pl<facet_multi>() == "ref");
 }
 
 TEST_CASE("facets") {
