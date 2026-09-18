@@ -412,6 +412,12 @@ public:
         return scoped_set_shared(impl::make_facet_ref(f));
     }
 
+    template <typename Facet>
+    scoped_set_guard_t scoped_reset() {
+        auto id = get_facet_id<Facet>();
+        return {m_container, id, {}};
+    }
+
     template <typename Facet, typename T>
     facet_payload_guard<decltype(Facet::payload)> scoped_pl_set(T&& t) {
         auto* pl = get_pl<Facet>();

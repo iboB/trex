@@ -129,6 +129,12 @@ void test_facets() {
     CHECK(fa.get<uint64_t>() == shared_uint.get());
 
     {
+        auto ss = fa.scoped_reset<uint64_t>();
+        CHECK_FALSE(fa.has<uint64_t>());
+    }
+    CHECK(fa.get<uint64_t>() == shared_uint.get());
+
+    {
         auto ss = fa.scoped_pl_set<facet_multi>("scoped");
         CHECK(ref_share.payload == "scoped");
         *ss = "foo";
