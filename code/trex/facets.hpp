@@ -10,6 +10,7 @@
 #include <vector>
 #include <cassert>
 #include <stdexcept>
+#include <utility>
 
 #include <splat/pp_util.h>
 
