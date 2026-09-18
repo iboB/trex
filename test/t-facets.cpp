@@ -6,6 +6,8 @@
 
 #include <cstdint>
 #include <string>
+#include <map>
+#include <unordered_map>
 
 struct domain_a : public trex::facet_domain<trex::reg::fast_registration> {};
 TREX_DECLARE_FACET_DOMAIN(domain_a);
@@ -52,6 +54,82 @@ TEST_CASE("domain") {
     CHECK(d_b.get_facet_id_by_name("facet_a") == trex::invalid_facet_id);
 }
 
+template <typename Domain>
+void test_domain_manual() {
+    auto& dom = trex::get_facet_domain<Domain>();
+    auto foo_id = dom.register_facet("foo");
+    CHECK(foo_id != trex::invalid_facet_id);
+
+    CHECK_THROWS_WITH(dom.register_facet("foo"), "facet name already exists: foo");
+    dom.unregister_facet(foo_id);
+    dom.unregister_facet(trex::invalid_facet_id); // must be safe
+}
+
+TEST_CASE("domain manual") {
+    test_domain_manual<domain_a>();
+    test_domain_manual<domain_b>();
+}
+
+template <typename Container>
+void test_facets() {
+    trex::facets<domain_a, Container> fa;
+    CHECK(fa.get<facet_a>() == nullptr);
+    CHECK(fa.get_pl<facet_a>() == nullptr);
+    CHECK(fa.get("facet_a") == nullptr);
+    CHECK(fa.get("foo") == nullptr);
+
+    fa.get_default_pl<facet_a>() = 42;
+    CHECK(fa.has<facet_a>());
+    {
+        auto* f = fa.get<facet_a>();
+        REQUIRE(f);
+        CHECK(f->payload == 42);
+        CHECK(fa.get<facet_a>() == f);
+        CHECK(&fa.get_default<facet_a>() == f);
+        CHECK(fa.get_pl<facet_a>() == &f->payload);
+        CHECK(fa.get("facet_a") == f);
+    }
+    fa.reset<facet_a>();
+    CHECK_FALSE(fa.has<facet_a>());
+
+    fa.set(facet_multi{"hello"});
+    CHECK(fa.has<facet_multi>());
+    {
+        auto* f = fa.get<facet_multi>();
+        REQUIRE(f);
+        CHECK(f->payload == "hello");
+        CHECK(fa.get("facet_multi") == f);
+    }
+
+    facet_multi ref_share = {"ref"};
+    fa.set_ref(ref_share);
+    CHECK(fa.get<facet_multi>() == &ref_share);
+    CHECK(fa.get_default_pl<facet_multi>() == "ref");
+
+    auto shared_uint = std::make_shared<uint64_t>(123);
+    fa.set_shared(shared_uint);
+    CHECK(shared_uint.use_count() == 2);
+    CHECK(fa.has<uint64_t>());
+    CHECK(fa.get("uint64_t") == shared_uint.get());
+    CHECK(fa.get_default<uint64_t>() == 123);
+    fa.reset("uint64_t");
+    CHECK_FALSE(fa.has<uint64_t>());
+
+    fa.set_unsafe("uint64_t", shared_uint);
+    CHECK(fa.get_default<uint64_t>() == 123);
+
+    trex::facets<domain_b, Container> fb;
+    fb.set_ref(ref_share);
+    CHECK(fb.get<facet_multi>() == &ref_share);
+    CHECK(fb.get_default_pl<facet_multi>() == "ref");
+}
+
+TEST_CASE("facets") {
+    test_facets<trex::dense_facet_container>();
+    test_facets<trex::sparse_facet_container>();
+    test_facets<trex::map_facet_container<std::map>>();
+    test_facets<trex::map_facet_container<std::unordered_map>>();
+}
 
 /////////////////////////////////
 // definitions

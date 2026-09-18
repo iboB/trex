@@ -43,7 +43,7 @@ public:
                 free_slot = i;
             }
             else if (f.name == name) {
-                throw std::invalid_argument("facet name already sparse: " + std::string(name));
+                throw std::invalid_argument("facet name already exists: " + std::string(name));
             }
         }
         assert(free_slot <= m_facets.size());
@@ -283,6 +283,15 @@ public:
         }
     }
 
+    // make sure you know what you're doing, this is not type-safe
+    void set_unsafe(std::string_view name, facet_te_ptr ptr) {
+        auto id = get_facet_id(name);
+        if (id == invalid_facet_id) {
+            throw std::invalid_argument("facet name not registered: " + std::string(name));
+        }
+        m_container.make_or_get_ptr(id) = std::move(ptr);
+    }
+
     template <typename Facet>
     void reset() {
         auto id = get_facet_id<Facet>();
@@ -313,7 +322,7 @@ public:
         if (!ptr) {
             ptr = impl::make_facet_ptr<Facet>();
         }
-        return static_cast<Facet&>(*ptr);
+        return *static_cast<Facet*>(ptr.get());
     }
 
     template <typename Facet>
@@ -325,13 +334,13 @@ public:
     template <typename Facet>
     Facet* get() const noexcept {
         auto id = get_facet_id<Facet>();
-        return static_cast<Facet*>(find(id));
+        return static_cast<Facet*>(m_container.find(id));
     }
 
     template <typename Facet>
-    auto& get_pl() const noexcept {
-        auto& facet = get<Facet>();
-        return facet.payload;
+    auto* get_pl() const noexcept {
+        auto* facet = get<Facet>();
+        return facet ? &facet->payload : nullptr;
     }
 
     void* get(std::string_view name) const noexcept {
