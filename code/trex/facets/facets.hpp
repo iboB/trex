@@ -4,7 +4,7 @@
 #pragma once
 #include "facet_id.hpp"
 #include "get.hpp"
-#include "lock.hpp"
+#include "../lock.hpp"
 
 #include <vector>
 #include <memory>
