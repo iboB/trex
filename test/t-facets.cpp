@@ -115,8 +115,27 @@ void test_facets() {
     fa.reset("uint64_t");
     CHECK_FALSE(fa.has<uint64_t>());
 
+    fa.set(uint64_t(53));
+    CHECK(fa.has<uint64_t>());
+    CHECK(fa.get_default<uint64_t>() == 53);
+
     fa.set_unsafe("uint64_t", shared_uint);
     CHECK(fa.get_default<uint64_t>() == 123);
+
+    {
+        auto ss = fa.scoped_set<uint64_t>(42);
+        CHECK(fa.get_default<uint64_t>() == 42);
+    }
+    CHECK(fa.get<uint64_t>() == shared_uint.get());
+
+    {
+        auto ss = fa.scoped_pl_set<facet_multi>("scoped");
+        CHECK(ref_share.payload == "scoped");
+        *ss = "foo";
+        CHECK(ref_share.payload == "foo");
+        CHECK(ss->length() == 3);
+    }
+    CHECK(ref_share.payload == "ref");
 
     trex::facets<domain_b, Container> fb;
     fb.set_ref(ref_share);
