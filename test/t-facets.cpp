@@ -123,7 +123,7 @@ void test_facets() {
     CHECK(fa.template get<uint64_t>() == 123);
 
     {
-        auto ss = fa.template scoped_reset<uint64_t>(42);
+        auto ss = fa.scoped_reset(uint64_t(42));
         CHECK(fa.template get<uint64_t>() == 42);
     }
     CHECK(fa.template pget<uint64_t>() == shared_uint);
@@ -147,6 +147,17 @@ void test_facets() {
     fb.reset_ref(ref_share);
     CHECK(fb.template pget<facet_multi>().get() == &ref_share);
     CHECK(fb.template get_pl<facet_multi>() == "ref");
+
+    auto pd = std::make_shared<double>(42);
+
+    CHECK(fb.get_or_init([] { return 3.5; }) == 3.5);
+    CHECK(fb.get_or_init([] { return 4.; }) == 3.5);
+    CHECK(fb.get_or_init([&] { return pd; }) == 3.5);
+    fb.template reset<double>();
+    CHECK_FALSE(fb.template has<double>());
+    CHECK(fb.get_or_init([&] { return pd; }) == 42);
+    CHECK(fb.template pget<double>() == pd);
+    CHECK(fb.get_or_init([] { return 4.; }) == 42);
 }
 
 TEST_CASE("facets") {
