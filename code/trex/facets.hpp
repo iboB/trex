@@ -117,10 +117,22 @@ struct facet_info_instance {
 #define TREX_DECLARE_FACET(export, domain, facet) \
     TREX_DECLARE_EXPORTED_FACET(SPLAT_PP_EMPTY(), domain, facet)
 
-#define TREX_DEFINE_FACET(domain, facet, name) \
+#define I_TREX_FACET_INSTANCE_VAR_NAME(facet) SPLAT_PP_CONCAT(_trex_facet_info_instance_, facet)
+
+#define TREX_DEFINE_FACET(domain, facet) \
+    facet_info_instance<domain, facet> I_TREX_FACET_INSTANCE_VAR_NAME(facet); \
+    facet_id_t _trex_get_facet_id(domain*, facet*) { \
+        return I_TREX_FACET_INSTANCE_VAR_NAME(facet).id; \
+    } \
+    /* absolutely pointless line, which will require a semicolon at the end of the macro */ \
+    facet_id_t _trex_get_facet_id(domain*, facet*)
+
+#define TREX_DEFINE_MULTI_DOMAIN_FACET(domain, facet, name) \
     facet_id_t _trex_get_facet_id(domain*, facet*) { \
         static facet_info_instance<domain, facet> info(SPLAT_PP_STRINGIZE(facet)); \
         return info.id; \
-    }
+    } \
+    /* absolutely pointless line, which will require a semicolon at the end of the macro */ \
+    facet_id_t _trex_get_facet_id(domain*, facet*)
 
 } // namespace trex
