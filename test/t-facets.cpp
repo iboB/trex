@@ -73,29 +73,29 @@ TEST_CASE("domain manual") {
 template <typename Container>
 void test_facets() {
     trex::facets<domain_a, Container> fa;
-    CHECK(fa.get<facet_a>() == nullptr);
-    CHECK(fa.get_pl<facet_a>() == nullptr);
+    CHECK(fa.template get<facet_a>() == nullptr);
+    CHECK(fa.template get_pl<facet_a>() == nullptr);
     CHECK(fa.get("facet_a") == nullptr);
     CHECK(fa.get("foo") == nullptr);
 
-    fa.get_default_pl<facet_a>() = 42;
-    CHECK(fa.has<facet_a>());
+    fa.template get_default_pl<facet_a>() = 42;
+    CHECK(fa.template has<facet_a>());
     {
-        auto* f = fa.get<facet_a>();
+        auto* f = fa.template get<facet_a>();
         REQUIRE(f);
         CHECK(f->payload == 42);
-        CHECK(fa.get<facet_a>() == f);
-        CHECK(&fa.get_default<facet_a>() == f);
-        CHECK(fa.get_pl<facet_a>() == &f->payload);
+        CHECK(fa.template get<facet_a>() == f);
+        CHECK(&fa.template get_default<facet_a>() == f);
+        CHECK(fa.template get_pl<facet_a>() == &f->payload);
         CHECK(fa.get("facet_a") == f);
     }
-    fa.reset<facet_a>();
-    CHECK_FALSE(fa.has<facet_a>());
+    fa.template reset<facet_a>();
+    CHECK_FALSE(fa.template has<facet_a>());
 
     fa.set(facet_multi{"hello"});
-    CHECK(fa.has<facet_multi>());
+    CHECK(fa.template has<facet_multi>());
     {
-        auto* f = fa.get<facet_multi>();
+        auto* f = fa.template get<facet_multi>();
         REQUIRE(f);
         CHECK(f->payload == "hello");
         CHECK(fa.get("facet_multi") == f);
@@ -103,39 +103,39 @@ void test_facets() {
 
     facet_multi ref_share = {"ref"};
     fa.set_ref(ref_share);
-    CHECK(fa.get<facet_multi>() == &ref_share);
-    CHECK(fa.get_default_pl<facet_multi>() == "ref");
+    CHECK(fa.template get<facet_multi>() == &ref_share);
+    CHECK(fa.template get_default_pl<facet_multi>() == "ref");
 
     auto shared_uint = std::make_shared<uint64_t>(123);
     fa.set_shared(shared_uint);
     CHECK(shared_uint.use_count() == 2);
-    CHECK(fa.has<uint64_t>());
+    CHECK(fa.template has<uint64_t>());
     CHECK(fa.get("uint64_t") == shared_uint.get());
-    CHECK(fa.get_default<uint64_t>() == 123);
+    CHECK(fa.template get_default<uint64_t>() == 123);
     fa.reset("uint64_t");
-    CHECK_FALSE(fa.has<uint64_t>());
+    CHECK_FALSE(fa.template has<uint64_t>());
 
     fa.set(uint64_t(53));
-    CHECK(fa.has<uint64_t>());
-    CHECK(fa.get_default<uint64_t>() == 53);
+    CHECK(fa.template has<uint64_t>());
+    CHECK(fa.template get_default<uint64_t>() == 53);
 
     fa.set_unsafe("uint64_t", shared_uint);
-    CHECK(fa.get_default<uint64_t>() == 123);
+    CHECK(fa.template get_default<uint64_t>() == 123);
 
     {
-        auto ss = fa.scoped_set<uint64_t>(42);
-        CHECK(fa.get_default<uint64_t>() == 42);
+        auto ss = fa.template scoped_set<uint64_t>(42);
+        CHECK(fa.template get_default<uint64_t>() == 42);
     }
-    CHECK(fa.get<uint64_t>() == shared_uint.get());
+    CHECK(fa.template get<uint64_t>() == shared_uint.get());
 
     {
-        auto ss = fa.scoped_reset<uint64_t>();
-        CHECK_FALSE(fa.has<uint64_t>());
+        auto ss = fa.template scoped_reset<uint64_t>();
+        CHECK_FALSE(fa.template has<uint64_t>());
     }
-    CHECK(fa.get<uint64_t>() == shared_uint.get());
+    CHECK(fa.template get<uint64_t>() == shared_uint.get());
 
     {
-        auto ss = fa.scoped_pl_set<facet_multi>("scoped");
+        auto ss = fa.template scoped_pl_set<facet_multi>("scoped");
         CHECK(ref_share.payload == "scoped");
         *ss = "foo";
         CHECK(ref_share.payload == "foo");
@@ -144,9 +144,9 @@ void test_facets() {
     CHECK(ref_share.payload == "ref");
 
     trex::facets<domain_b, Container> fb;
-    fb.set_ref(ref_share);
-    CHECK(fb.get<facet_multi>() == &ref_share);
-    CHECK(fb.get_default_pl<facet_multi>() == "ref");
+    fb.template set_ref(ref_share);
+    CHECK(fb.template get<facet_multi>() == &ref_share);
+    CHECK(fb.template get_default_pl<facet_multi>() == "ref");
 }
 
 TEST_CASE("facets") {
