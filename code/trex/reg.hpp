@@ -8,7 +8,7 @@ namespace trex::reg {
 
 struct thread_safe_registration {
     using mutex = std::mutex;
-    using lock_guard = std::lock_guard;
+    using lock_guard = std::lock_guard<mutex>;
 };
 
 struct fast_registration {

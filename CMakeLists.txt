@@ -40,10 +40,10 @@ mark_as_advanced(TREX_BUILD_TESTS TREX_BUILD_EXAMPLES TREX_BUILD_BENCH TREX_BUIL
 # code
 add_subdirectory(code)
 
-#~ if(TREX_BUILD_TESTS)
-#~     enable_testing()
-#~     add_subdirectory(test)
-#~ endif()
+if(TREX_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
 
 #~ if(TREX_BUILD_BENCH)
 #~     add_subdirectory(bench)
