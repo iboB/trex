@@ -72,7 +72,7 @@ TEST_CASE("domain manual") {
 
 template <typename Container>
 void test_facets() {
-    trex::facets<domain_a, Container> fa;
+    trex::facets<domain_a, Container, trex::lock::fast> fa;
     CHECK(fa.template pget<facet_a>() == nullptr);
     CHECK(fa.template pget_pl<facet_a>() == nullptr);
     CHECK(fa.pget("facet_a") == nullptr);
@@ -143,7 +143,7 @@ void test_facets() {
     }
     CHECK(ref_share.payload == "ref");
 
-    trex::facets<domain_b, Container> fb;
+    trex::facets<domain_b, Container, trex::lock::thread_safe> fb;
     fb.reset_ref(ref_share);
     CHECK(fb.template pget<facet_multi>().get() == &ref_share);
     CHECK(fb.template get_pl<facet_multi>() == "ref");

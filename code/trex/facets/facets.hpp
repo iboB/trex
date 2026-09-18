@@ -4,6 +4,7 @@
 #pragma once
 #include "facet_id.hpp"
 #include "get.hpp"
+#include "lock.hpp"
 
 #include <vector>
 #include <memory>
@@ -155,8 +156,12 @@ public:
     T* operator->() { return m_payload.get(); }
 };
 
-template <typename Domain, typename Container = default_facet_container>
+template <typename Domain, typename Container = default_facet_container, typename LockType = lock::default_lock>
 class facets {
+    using mutex = typename LockType::mutex;
+    using lock_guard = typename LockType::lock_guard;
+
+    mutable mutex m_mutex;
     Container m_container;
 
     template <typename Facet>
@@ -172,16 +177,19 @@ public:
     template <typename Facet>
     bool has() const noexcept {
         auto id = get_facet_id<Facet>();
+        lock_guard lock(m_mutex);
         return !!m_container.find(id);
     }
 
     bool has_name(std::string_view name) const noexcept {
         auto id = get_facet_id(name);
+        lock_guard lock(m_mutex);
         return !!m_container.find(id);
     }
 
     // make sure you know what you're doing, this is not type-safe
     void reset_id(facet_id id, facet_te_ptr ptr) {
+        lock_guard lock(m_mutex);
         if (!ptr) {
             m_container.erase(id);
         }
@@ -218,16 +226,19 @@ public:
     template <typename Facet>
     void reset() {
         auto id = get_facet_id<Facet>();
+        lock_guard lock(m_mutex);
         m_container.erase(id);
     }
 
     void reset_name(std::string_view name) {
         auto id = get_facet_id(name);
+        lock_guard lock(m_mutex);
         m_container.erase(id);
     }
 
     template <typename InitFunc>
     void* get_or_init_id(facet_id id, InitFunc&& init) {
+        lock_guard lock(m_mutex);
         auto& ptr = m_container.make_or_get_ptr(id);
         if (!ptr) {
             ptr = std::forward<InitFunc>(init)();
@@ -276,6 +287,7 @@ public:
     template <typename Facet>
     std::shared_ptr<Facet> pget() const noexcept {
         auto id = get_facet_id<Facet>();
+        lock_guard lock(m_mutex);
         return std::static_pointer_cast<Facet>(m_container.find(id));
     }
 
@@ -288,6 +300,7 @@ public:
 
     facet_te_ptr pget(std::string_view name) const noexcept {
         auto id = get_facet_id(name);
+        lock_guard lock(m_mutex);
         return m_container.find(id);
     }
 
@@ -295,6 +308,7 @@ public:
 
     template <typename Facet>
     scoped_reset_guard_t scoped_reset_shared(std::shared_ptr<Facet> newptr) {
+        static_assert(std::is_same_v<LockType, lock::fast>, "scoped_reset only available on lockless containers");
         auto id = get_facet_id<Facet>();
         return {m_container, id, std::move(newptr)};
     }
@@ -311,6 +325,7 @@ public:
 
     template <typename Facet>
     scoped_reset_guard_t scoped_reset() {
+        static_assert(std::is_same_v<LockType, lock::fast>, "scoped_reset only available on lockless containers");
         auto id = get_facet_id<Facet>();
         return {m_container, id, {}};
     }
