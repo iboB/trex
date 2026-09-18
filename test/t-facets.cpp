@@ -144,7 +144,7 @@ void test_facets() {
     CHECK(ref_share.payload == "ref");
 
     trex::facets<domain_b, Container> fb;
-    fb.template set_ref(ref_share);
+    fb.set_ref(ref_share);
     CHECK(fb.template get<facet_multi>() == &ref_share);
     CHECK(fb.template get_default_pl<facet_multi>() == "ref");
 }
