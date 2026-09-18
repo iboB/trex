@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "facet_id.hpp"
-#include "../reg.hpp"
+#include "../lock.hpp"
 
 #include <string_view>
 #include <stdexcept>
@@ -12,10 +12,10 @@
 
 namespace trex {
 
-template <typename Registration = reg::default_registration>
+template <typename RegistrationType = lock::default_lock>
 class facet_domain {
-    using mutex = typename Registration::mutex;
-    using lock_guard = typename Registration::lock_guard;
+    using mutex = typename RegistrationType::mutex;
+    using lock_guard = typename RegistrationType::lock_guard;
 public:
     struct facet_info {
         std::string_view name;

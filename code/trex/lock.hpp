@@ -4,14 +4,14 @@
 #pragma once
 #include <mutex>
 
-namespace trex::reg {
+namespace trex::lock {
 
-struct thread_safe_registration {
+struct thread_safe {
     using mutex = std::mutex;
     using lock_guard = std::lock_guard<mutex>;
 };
 
-struct fast_registration {
+struct fast {
     struct mutex {
         void lock() {}
         void unlock() {}
@@ -21,6 +21,6 @@ struct fast_registration {
     };
 };
 
-using default_registration = fast_registration;
+using default_lock = fast;
 
-} // namespace trex::reg
+} // namespace trex::lock

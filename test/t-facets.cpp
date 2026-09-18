@@ -9,9 +9,9 @@
 #include <map>
 #include <unordered_map>
 
-struct domain_a : public trex::facet_domain<trex::reg::fast_registration> {};
+struct domain_a : public trex::facet_domain<trex::lock::fast> {};
 TREX_DECLARE_FACET_DOMAIN(domain_a);
-struct domain_b : public trex::facet_domain<trex::reg::thread_safe_registration> {};
+struct domain_b : public trex::facet_domain<trex::lock::thread_safe> {};
 TREX_DECLARE_FACET_DOMAIN(domain_b);
 
 struct facet_a {

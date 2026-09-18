@@ -3,17 +3,17 @@
 //
 #pragma once
 #include "type_info.hpp"
-#include "reg.hpp"
+#include "lock.hpp"
 
 #include <vector>
 #include <algorithm>
 
 namespace trex {
 
-template <typename Registration, typename Base, typename... CtorArgs>
+template <typename RegistrationType, typename Base, typename... CtorArgs>
 class basic_hierarchy {
-    using mutex = typename Registration::mutex;
-    using lock_guard = typename Registration::lock_guard;
+    using mutex = typename RegistrationType::mutex;
+    using lock_guard = typename RegistrationType::lock_guard;
 public:
     using base_t = Base;
 
@@ -112,6 +112,6 @@ private:
 };
 
 template <typename Base, typename... CtorArgs>
-using hierarchy = basic_hierarchy<reg::fast_registration, Base, CtorArgs...>;
+using hierarchy = basic_hierarchy<lock::default_lock, Base, CtorArgs...>;
 
 }
