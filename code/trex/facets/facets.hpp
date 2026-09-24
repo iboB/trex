@@ -173,6 +173,19 @@ class facets {
         auto& domain = ::trex::get_facet_domain<Domain>();
         return domain.get_facet_id_by_name(name);
     }
+
+    static facet_id get_facet_id_or_throw(std::string_view name) {
+        auto id = get_facet_id(name);
+        if (id == invalid_facet_id) {
+            throw std::invalid_argument("facet name not registered: " + std::string(name));
+        }
+        return id;
+    }
+
+    static std::string_view get_facet_name(facet_id id) {
+        auto& domain = ::trex::get_facet_domain<Domain>();
+        return domain.get_facet_name(id);
+    }
 public:
     template <typename Facet>
     bool has() const noexcept {
@@ -185,6 +198,37 @@ public:
         auto id = get_facet_id(name);
         lock_guard lock(m_mutex);
         return !!m_container.find(id);
+    }
+
+    // make sure you know what you're doing, this is not type-safe
+    void set_id(facet_id id, facet_te_ptr ptr) {
+        lock_guard lock(m_mutex);
+        auto& p = m_container.make_or_get_ptr(id);
+        if (p) {
+            throw std::logic_error("facet already set: " + std::string(get_facet_name(id)));
+        }
+        p = std::move(ptr);
+    }
+
+    template <typename Facet>
+    void set_shared(std::shared_ptr<Facet> f) {
+        auto id = get_facet_id<Facet>();
+        set_id(id, std::move(f));
+    }
+
+    template <typename Facet>
+    void set(Facet&& facet) {
+        set_shared(std::make_shared<std::decay_t<Facet>>(std::forward<Facet>(facet)));
+    }
+
+    template <typename Facet>
+    void set_ref(Facet& f) {
+        set_shared(impl::make_facet_ref(f));
+    }
+
+    void set_name(std::string_view name, facet_te_ptr ptr) {
+        auto id = get_facet_id_or_throw(name);
+        set_id(id, std::move(ptr));
     }
 
     // make sure you know what you're doing, this is not type-safe
@@ -217,10 +261,7 @@ public:
 
     // make sure you know what you're doing, this is not type-safe
     facet_te_ptr reset_name(std::string_view name, facet_te_ptr ptr) {
-        auto id = get_facet_id(name);
-        if (id == invalid_facet_id) {
-            throw std::invalid_argument("facet name not registered: " + std::string(name));
-        }
+        auto id = get_facet_id_or_throw(name);
         return reset_id(id, std::move(ptr));
     }
 

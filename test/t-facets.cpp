@@ -49,9 +49,17 @@ TEST_CASE("domain") {
     CHECK(d_a.get_facet_id_by_name("uint64_t") == id_uint64);
     CHECK(d_b.get_facet_id_by_name("double") == id_double);
 
+    CHECK(d_a.get_facet_name(id_a) == "facet_a");
+    CHECK(d_a.get_facet_name(id_multi_a) == "facet_multi");
+    CHECK(d_b.get_facet_name(id_multi_b) == "facet_multi");
+    CHECK(d_a.get_facet_name(id_uint64) == "uint64_t");
+    CHECK(d_b.get_facet_name(id_double) == "double");
+
     CHECK(d_a.get_facet_id_by_name("nonexistent") == trex::invalid_facet_id);
     CHECK(d_a.get_facet_id_by_name("double") == trex::invalid_facet_id);
     CHECK(d_b.get_facet_id_by_name("facet_a") == trex::invalid_facet_id);
+
+    CHECK(d_a.get_facet_name(trex::invalid_facet_id) == "");
 }
 
 template <typename Domain>
@@ -95,7 +103,7 @@ void test_facets() {
     }
     CHECK_FALSE(fa.template has<facet_a>());
 
-    fa.reset(facet_multi{"hello"});
+    fa.set(facet_multi{"hello"});
     CHECK(fa.template has<facet_multi>());
     {
         auto f = fa.template pget<facet_multi>();
@@ -162,6 +170,11 @@ void test_facets() {
     CHECK(fb.get_or_init([] { return 3.5; }) == 3.5);
     CHECK(fb.get_or_init([] { return 4.; }) == 3.5);
     CHECK(fb.get_or_init([&] { return pd; }) == 3.5);
+
+    CHECK_THROWS_WITH(fb.set(3.5), "facet already set: double");
+    CHECK_THROWS_WITH(fb.set_name("facet_a", {}), "facet name not registered: facet_a");
+    CHECK_THROWS_WITH(fb.reset_name("facet_a", {}), "facet name not registered: facet_a");
+
     {
         auto old = fb.template reset<double>();
         CHECK(*old == 3.5);
