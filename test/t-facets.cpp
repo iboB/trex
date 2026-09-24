@@ -89,7 +89,10 @@ void test_facets() {
         CHECK(fa.template pget_pl<facet_a>().get() == &f->payload);
         CHECK(fa.pget("facet_a") == f);
     }
-    fa.template reset<facet_a>();
+    {
+        auto old = fa.template reset<facet_a>();
+        CHECK(old->payload == 42);
+    }
     CHECK_FALSE(fa.template has<facet_a>());
 
     fa.reset(facet_multi{"hello"});
@@ -112,10 +115,16 @@ void test_facets() {
     CHECK(fa.template has<uint64_t>());
     CHECK(fa.pget("uint64_t") == shared_uint);
     CHECK(fa.template get<uint64_t>() == 123);
-    fa.reset_name("uint64_t");
+    {
+        auto old = fa.reset_name("uint64_t");
+        CHECK(old == shared_uint);
+    }
     CHECK_FALSE(fa.template has<uint64_t>());
 
-    fa.reset(uint64_t(53));
+    {
+        auto old = fa.reset(uint64_t(53));
+        CHECK_FALSE(old);
+    }
     CHECK(fa.template has<uint64_t>());
     CHECK(fa.template get<uint64_t>() == 53);
 
@@ -153,7 +162,10 @@ void test_facets() {
     CHECK(fb.get_or_init([] { return 3.5; }) == 3.5);
     CHECK(fb.get_or_init([] { return 4.; }) == 3.5);
     CHECK(fb.get_or_init([&] { return pd; }) == 3.5);
-    fb.template reset<double>();
+    {
+        auto old = fb.template reset<double>();
+        CHECK(*old == 3.5);
+    }
     CHECK_FALSE(fb.template has<double>());
     CHECK(fb.get_or_init([&] { return pd; }) == 42);
     CHECK(fb.template pget<double>() == pd);

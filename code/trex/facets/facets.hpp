@@ -188,52 +188,53 @@ public:
     }
 
     // make sure you know what you're doing, this is not type-safe
-    void reset_id(facet_id id, facet_te_ptr ptr) {
+    facet_te_ptr reset_id(facet_id id, facet_te_ptr ptr) {
         lock_guard lock(m_mutex);
         if (!ptr) {
-            m_container.erase(id);
+            return m_container.erase(id);
         }
         else {
-            m_container.make_or_get_ptr(id) = std::move(ptr);
+            return std::exchange(m_container.make_or_get_ptr(id), std::move(ptr));
         }
     }
 
     template <typename Facet>
-    void reset_shared(std::shared_ptr<Facet> f) {
+    std::shared_ptr<Facet> reset_shared(std::shared_ptr<Facet> f) {
         auto id = get_facet_id<Facet>();
-        reset_id(id, std::move(f));
+        auto ret = reset_id(id, std::move(f));
+        return std::static_pointer_cast<Facet>(ret);
     }
 
     template <typename Facet>
-    void reset(Facet&& facet) {
-        reset_shared(std::make_shared<std::decay_t<Facet>>(std::forward<Facet>(facet)));
+    std::shared_ptr<Facet> reset(Facet&& facet) {
+        return reset_shared(std::make_shared<std::decay_t<Facet>>(std::forward<Facet>(facet)));
     }
 
     template <typename Facet>
-    void reset_ref(Facet& f) {
-        reset_shared(impl::make_facet_ref(f));
+    std::shared_ptr<Facet> reset_ref(Facet& f) {
+        return reset_shared(impl::make_facet_ref(f));
     }
 
     // make sure you know what you're doing, this is not type-safe
-    void reset_name(std::string_view name, facet_te_ptr ptr) {
+    facet_te_ptr reset_name(std::string_view name, facet_te_ptr ptr) {
         auto id = get_facet_id(name);
         if (id == invalid_facet_id) {
             throw std::invalid_argument("facet name not registered: " + std::string(name));
         }
-        reset_id(id, std::move(ptr));
+        return reset_id(id, std::move(ptr));
     }
 
     template <typename Facet>
-    void reset() {
+    std::shared_ptr<Facet> reset() {
         auto id = get_facet_id<Facet>();
         lock_guard lock(m_mutex);
-        m_container.erase(id);
+        return std::static_pointer_cast<Facet>(m_container.erase(id));
     }
 
-    void reset_name(std::string_view name) {
+    facet_te_ptr reset_name(std::string_view name) {
         auto id = get_facet_id(name);
         lock_guard lock(m_mutex);
-        m_container.erase(id);
+        return m_container.erase(id);
     }
 
     template <typename InitFunc>
