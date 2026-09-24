@@ -68,6 +68,14 @@ public:
         return invalid_facet_id;
     }
 
+    std::string_view get_facet_name(facet_id id) const {
+        lock_guard lock(m_register_mutex);
+        if (id >= m_facets.size()) {
+            return {};
+        }
+        return m_facets[id].name;
+    }
+
 private:
     mutable mutex m_register_mutex;
     std::vector<facet_info> m_facets; // sparse
