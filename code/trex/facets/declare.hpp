@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 //
 #pragma once
+#include "facet_id.hpp"
 #include <splat/pp_util.h>
 
 #define TREX_DECLARE_EXPORTED_FACET_DOMAIN(export, domain) \
