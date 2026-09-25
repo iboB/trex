@@ -205,7 +205,10 @@ public:
         lock_guard lock(m_mutex);
         auto& p = m_container.make_or_get_ptr(id);
         if (p) {
-            throw std::logic_error("facet already set: " + std::string(get_facet_name(id)));
+            // facet name is commented out here because it requires a defined domain
+            // all methods of facets that don't involve the name must work with a forward declared domain
+            // we sacricice the "prettyness" of the exception to make this work
+            throw std::logic_error("facet already set"/* ": " + std::string(get_facet_name(id))*/);
         }
         p = std::move(ptr);
     }

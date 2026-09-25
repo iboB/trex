@@ -171,7 +171,7 @@ void test_facets() {
     CHECK(fb.get_or_init([] { return 4.; }) == 3.5);
     CHECK(fb.get_or_init([&] { return pd; }) == 3.5);
 
-    CHECK_THROWS_WITH(fb.set(3.5), "facet already set: double");
+    CHECK_THROWS_WITH(fb.set(3.5), "facet already set");
     CHECK_THROWS_WITH(fb.set_name("facet_a", {}), "facet name not registered: facet_a");
     CHECK_THROWS_WITH(fb.reset_name("facet_a", {}), "facet name not registered: facet_a");
 
