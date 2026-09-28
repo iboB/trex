@@ -213,7 +213,7 @@ public:
         if (p) {
             // facet name is commented out here because it requires a defined domain
             // all methods of facets that don't involve the name must work with a forward declared domain
-            // we sacricice the "prettiness" of the exception to make this work
+            // we sacrifice the "prettiness" of the exception to make this work
             throw std::logic_error("facet already set"/* ": " + std::string(get_facet_name(id))*/);
         }
         p = std::move(ptr);
