@@ -62,7 +62,7 @@ struct dense_facet_container {
 };
 
 // sparse container using O(1) direct indexing for facet ids
-// use when you expect a larget number of facets or when facet get is performance critical
+// use when you expect a larger number of facets or when facet get is performance critical
 // WARNING: the size of the container will be at least as large as the largest facet id,
 // so if you have a large number of registered facets this might waste a lot of memory
 struct sparse_facet_container {
@@ -127,6 +127,9 @@ public:
         cur = std::move(newptr);
     }
 
+    facet_reset_guard(const facet_reset_guard&) = delete;
+    facet_reset_guard& operator=(const facet_reset_guard&) = delete;
+
     ~facet_reset_guard() {
         if (m_old_facet_ptr) {
             m_container.make_or_get_ptr(m_facet_id) = std::move(m_old_facet_ptr);
@@ -147,6 +150,9 @@ public:
         : m_payload(std::move(payload))
         , m_old_value(std::exchange(*m_payload, std::forward<U>(newValue)))
     {}
+
+    facet_payload_guard(const facet_payload_guard&) = delete;
+    facet_payload_guard& operator=(const facet_payload_guard&) = delete;
 
     ~facet_payload_guard() {
         *m_payload = std::move(m_old_value);
@@ -207,7 +213,7 @@ public:
         if (p) {
             // facet name is commented out here because it requires a defined domain
             // all methods of facets that don't involve the name must work with a forward declared domain
-            // we sacricice the "prettyness" of the exception to make this work
+            // we sacricice the "prettiness" of the exception to make this work
             throw std::logic_error("facet already set"/* ": " + std::string(get_facet_name(id))*/);
         }
         p = std::move(ptr);
